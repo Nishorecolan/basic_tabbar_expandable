@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_sample/colors.dart';
 import 'package:flutter_bloc_sample/widgets.dart';
+
+import 'cubit_bloc.dart';
 
 class InvestmentScreen extends StatelessWidget {
   const InvestmentScreen({super.key});
@@ -10,36 +14,32 @@ class InvestmentScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          leading: Icon(Icons.arrow_back,color: Colors.black,),
+          leading: const Icon(
+            Icons.arrow_back,
+            color: Colors.black,
+          ),
           backgroundColor: Colors.white,
           elevation: 1,
           centerTitle: true,
-          title: Text('Investments & Allocations',style: TextStyle(color: Colors.grey.shade800,fontSize: 16)),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right:8.0),
-              child: CircleAvatar(
-                radius: 12,
-                child: Icon(Icons.question_mark,size: 15),
-              ),
-            )
-          ],
-          bottom: TabBar(
-            labelColor: Colors.black,
-            unselectedLabelColor: Colors.grey,
+          title: Text('Investments & Allocations',
+              style: TextStyle(color: Colors.grey.shade800, fontSize: 16)),
+          actions: [Image.asset('assets/question_mark.png')],
+          bottom: const TabBar(
+            labelColor: Color(0xff0D3C59),
+            unselectedLabelColor: Color(0xff6C787F),
             tabs: [
               Tab(text: 'Investments'),
               Tab(text: 'Allocations'),
             ],
           ),
         ),
-
-        body: TabBarView(
-          children: [
-            Investments(),
-            Allocations()
-          ],
-        )
+        body: BlocBuilder<CubitBloc, int>(
+          builder: (context, value) {
+            return const TabBarView(
+              children: [Investments(), Allocations()],
+            );
+          },
+        ),
       ),
     );
   }
@@ -50,68 +50,56 @@ class Investments extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+              padding: EdgeInsets.only(left: 16, right: 16, top: 32),
+              child: buildText(
+                  name: 'Investments Allocation Options', fontSize: 16)),
+          buildRowData(
+              title: 'Total Accumulation Value', value: '\$100,843.90'),
+          buildTransactionCard(isInvestments: true),
+          buildTransactionCard(
+              fundRiskPriority: 'MODERATE',
+              fundRiskColor: AppColors.green,
+              isInvestments: true),
+          buildTransactionCard(
+              fundRiskPriority: 'HIGH',
+              fundRiskColor: AppColors.darkGreen,
+              isInvestments: true),
+          buildRowData(
+              title: 'Total Accumulation Value', value: '\$100,843.90'),
+          buildButton(buttonName: 'Modify Future Allocation of Premium'),
+          buildContactText()
+        ],
+      ),
     );
   }
 }
 
 class Allocations extends StatelessWidget {
-  const Allocations({super.key});
+   const Allocations({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(itemBuilder: (context,index) {
-      return ExpansionTile(
-        title: buildText(name:'Current Premium Allocation'),
-        children: [
-          Divider(color: Colors.grey.shade700),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                buildText(name:'Total Allocation'),
-                Spacer(),
-                buildText(name: '100%')
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Container(height: 170,color: Colors.red),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Container(height: 170,color: Colors.blue),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                buildText(name:'Total Allocation'),
-                Spacer(),
-                buildText(name: '100%')
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: (){},
-              child: buildText(name: 'Reallocate Funds',fontColor: Colors.white),
-            ),
-          ),
-          Padding(
-              padding: const EdgeInsets.all(16.0),
-              child:
-              buildText(name: 'Generally there is a maximum of three verbal and/or electronic trades allowed in a rolling 60 day timeframe before being resurfaced to requests via regular or overnight mail for one year. \n\nPlease see your prospectus, contact your registered representative, or call 1-800-598-2019 for details. To access investments division daily unit values, performance summaries, and to download a prospectus please click here.',fontSize: 14,fontWeight: FontWeight.w400))
-        ],
+    final cubitData = BlocProvider.of<CubitBloc>(context);
 
-      );
-    },itemCount: 10);
+    return ListView.builder(
+        key: Key(cubitData.selectedTile.toString()),
+        itemBuilder: (context, index) {
+          return buildExpansionTile(index, cubitData.selectedTile,
+              name: cubitData.title[index],
+              isDateVisible: cubitData.isDateDue[index],
+              onExpansionChanged: (val) {
+            if (val) {
+              cubitData.updateSelectedTile(index);
+            } else {
+              cubitData.updateSelectedTile(-1);
+            }
+          });
+        },
+        itemCount: cubitData.title.length);
   }
 }
-
-
